@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/heyihong/krepl/pkg/portforward"
 	"github.com/heyihong/krepl/pkg/repl"
 )
 
@@ -133,7 +134,7 @@ func TestDispatch_UnknownCommand(t *testing.T) {
 
 func TestDispatch_QuitSetsFlag(t *testing.T) {
 	env := makeTestEnv()
-	env.AddPortForward(repl.NewPortForwardSession("pod-0", "default", []string{"8080"}))
+	env.AddPortForward(portforward.NewSession("pod-0", "default", []string{"8080"}))
 	cmds := BuildCommands()
 	if err := repl.Dispatch(env, cmds, "quit"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -141,7 +142,7 @@ func TestDispatch_QuitSetsFlag(t *testing.T) {
 	if !env.IsQuit() {
 		t.Error("expected env.quit to be true after 'quit' command")
 	}
-	if env.PortForward(0).Status() != repl.PortForwardStopped {
+	if env.PortForward(0).Status() != portforward.Stopped {
 		t.Error("expected quit to stop active port forwards")
 	}
 }

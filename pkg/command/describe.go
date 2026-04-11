@@ -10,9 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
-
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -23,6 +20,9 @@ import (
 	"k8s.io/client-go/dynamic"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/yaml"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 type describeOptions struct {

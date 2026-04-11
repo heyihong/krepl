@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heyihong/krepl/pkg/repl"
-
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestFindCommand_LogsAliasRegistered(t *testing.T) {

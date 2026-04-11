@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heyihong/krepl/pkg/repl"
-
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestFindCommand_DescribeRegistered(t *testing.T) {

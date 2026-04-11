@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/heyihong/krepl/pkg/repl"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 // --- editGVR ---

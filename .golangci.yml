@@ -4,3 +4,13 @@ linters:
   default: standard
   enable:
     - gosec
+
+formatters:
+  enable:
+    - gci
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/heyihong/krepl)

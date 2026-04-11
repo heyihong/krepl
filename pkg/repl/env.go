@@ -3,14 +3,15 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"github.com/heyihong/krepl/pkg/styles"
 	"io"
 	"os"
 	"sort"
 	"strings"
-	"sync"
 
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/portforward"
+	"github.com/heyihong/krepl/pkg/styles"
 )
 
 // LastObjectKind identifies what type of object is stored in a LastObject.
@@ -67,163 +68,6 @@ type Selection struct {
 	Label string
 }
 
-// PortForwardStatus tracks the lifecycle of a managed port-forward session.
-type PortForwardStatus int
-
-const (
-	PortForwardStarting PortForwardStatus = iota
-	PortForwardRunning
-	PortForwardStopped
-	PortForwardExited
-)
-
-const maxPortForwardOutputBytes = 16 * 1024
-
-// PortForwardSession stores REPL-managed state for an active or completed
-// port-forward operation.
-type PortForwardSession struct {
-	PodName   string
-	Namespace string
-	Ports     []string
-
-	stopCh  chan struct{}
-	readyCh chan struct{}
-
-	mu        sync.Mutex
-	status    PortForwardStatus
-	exitErr   error
-	stopOnce  sync.Once
-	outputBuf string
-}
-
-// NewPortForwardSession creates a new managed port-forward session.
-func NewPortForwardSession(podName, namespace string, ports []string) *PortForwardSession {
-	return &PortForwardSession{
-		PodName:   podName,
-		Namespace: namespace,
-		Ports:     append([]string(nil), ports...),
-		stopCh:    make(chan struct{}),
-		readyCh:   make(chan struct{}),
-		status:    PortForwardStarting,
-	}
-}
-
-// StopChannel returns the signal channel used to stop the underlying forwarder.
-func (s *PortForwardSession) StopChannel() chan struct{} { return s.stopCh }
-
-// ReadyChannel returns the channel closed by the underlying forwarder when ready.
-func (s *PortForwardSession) ReadyChannel() chan struct{} { return s.readyCh }
-
-// MarkRunning records that the forwarder became ready.
-func (s *PortForwardSession) MarkRunning() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.status == PortForwardStarting {
-		s.status = PortForwardRunning
-	}
-}
-
-// MarkExited records that the forwarder terminated.
-func (s *PortForwardSession) MarkExited(err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.status == PortForwardStopped {
-		return
-	}
-	if err == nil {
-		s.status = PortForwardStopped
-		s.exitErr = nil
-		return
-	}
-	s.status = PortForwardExited
-	s.exitErr = err
-}
-
-// Stop requests that the session stop and marks it as stopped.
-func (s *PortForwardSession) Stop() {
-	s.stopOnce.Do(func() {
-		close(s.stopCh)
-	})
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.status = PortForwardStopped
-	s.exitErr = nil
-}
-
-// AppendOutput records forwarder output while bounding total retained text.
-func (s *PortForwardSession) AppendOutput(text string) {
-	if text == "" {
-		return
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.outputBuf += text
-	if len(s.outputBuf) > maxPortForwardOutputBytes {
-		s.outputBuf = s.outputBuf[len(s.outputBuf)-maxPortForwardOutputBytes:]
-	}
-}
-
-// Output returns the retained forwarder output.
-func (s *PortForwardSession) Output() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.outputBuf
-}
-
-// Status returns the session lifecycle status.
-func (s *PortForwardSession) Status() PortForwardStatus {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.status
-}
-
-// ExitError returns the terminal error, if any.
-func (s *PortForwardSession) ExitError() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.exitErr
-}
-
-// StatusString formats the current lifecycle state for table output.
-func (s *PortForwardSession) StatusString() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	switch s.status {
-	case PortForwardStarting:
-		return "Starting"
-	case PortForwardRunning:
-		return "Running"
-	case PortForwardStopped:
-		return "Stopped"
-	case PortForwardExited:
-		if s.exitErr != nil {
-			return fmt.Sprintf("Exited: %v", s.exitErr)
-		}
-		return "Exited"
-	default:
-		return "Unknown"
-	}
-}
-
-// PortsString formats the configured ports for display.
-func (s *PortForwardSession) PortsString() string {
-	return strings.Join(s.Ports, ", ")
-}
-
-type portForwardOutputWriter struct {
-	session *PortForwardSession
-}
-
-// NewPortForwardOutputWriter returns an io.Writer sink for forwarder output.
-func NewPortForwardOutputWriter(session *PortForwardSession) io.Writer {
-	return &portForwardOutputWriter{session: session}
-}
-
-func (w *portForwardOutputWriter) Write(p []byte) (int, error) {
-	w.session.AppendOutput(string(p))
-	return len(p), nil
-}
-
 // Env is the central mutable REPL state.
 type Env struct {
 	// rawConfig is the full parsed kubeconfig, used to enumerate contexts.
@@ -268,7 +112,7 @@ type Env struct {
 	resetTerminal bool
 
 	// portForwards stores managed port-forward sessions created by the REPL.
-	portForwards []*PortForwardSession
+	portForwards []*portforward.Session
 }
 
 // NewEnv creates a new Env from a loaded kubeconfig, seeding currentContext
@@ -590,17 +434,17 @@ func (e *Env) ApplyToSelection(fn func(LastObject) error) error {
 }
 
 // AddPortForward appends a managed port-forward session.
-func (e *Env) AddPortForward(session *PortForwardSession) {
+func (e *Env) AddPortForward(session *portforward.Session) {
 	e.portForwards = append(e.portForwards, session)
 }
 
 // PortForwards returns all managed port-forward sessions.
-func (e *Env) PortForwards() []*PortForwardSession {
+func (e *Env) PortForwards() []*portforward.Session {
 	return e.portForwards
 }
 
 // PortForward returns the session at index i, or nil if out of range.
-func (e *Env) PortForward(i int) *PortForwardSession {
+func (e *Env) PortForward(i int) *portforward.Session {
 	if i < 0 || i >= len(e.portForwards) {
 		return nil
 	}

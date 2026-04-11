@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/heyihong/krepl/pkg/repl"
-
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestRangeCommand_PrintsSelectedObjects(t *testing.T) {

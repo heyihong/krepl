@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/heyihong/krepl/pkg/config"
 	"github.com/heyihong/krepl/pkg/repl"
 	"github.com/heyihong/krepl/pkg/styles"
 	"github.com/heyihong/krepl/pkg/table"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func newNamespacesCmd() *cmd {

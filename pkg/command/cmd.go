@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/heyihong/krepl/pkg/repl"
 	"github.com/spf13/pflag"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 // positionalArgs validates positional arguments after flag parsing.

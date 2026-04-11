@@ -3,14 +3,15 @@ package command
 import (
 	"context"
 	"fmt"
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
-	"github.com/heyihong/krepl/pkg/table"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
+	"github.com/heyihong/krepl/pkg/table"
 )
 
 var listDeploymentsForContext = func(ctx context.Context, rawConfig clientcmdapi.Config, contextName, namespace string) ([]appsv1.Deployment, error) {

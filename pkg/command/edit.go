@@ -11,15 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/yaml"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 var fetchEditObject = func(ctx context.Context, rawConfig clientcmdapi.Config, contextName string, obj repl.LastObject) (*unstructured.Unstructured, error) {

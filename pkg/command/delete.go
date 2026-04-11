@@ -4,17 +4,18 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
 	"io"
 	"os"
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 type deleteOptions struct {

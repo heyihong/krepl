@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heyihong/krepl/pkg/repl"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestFindDynamicResourceInAPIResourceList_MatchesPlural(t *testing.T) {

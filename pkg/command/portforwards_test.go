@@ -2,13 +2,15 @@ package command
 
 import (
 	"errors"
-	"github.com/heyihong/krepl/pkg/repl"
 	"io"
 	"net/url"
 	"strings"
 	"testing"
 
 	"k8s.io/client-go/rest"
+
+	"github.com/heyihong/krepl/pkg/portforward"
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 type fakePortForwarder struct {
@@ -121,7 +123,7 @@ func TestPortForwardCommand_ReadyStoresSession(t *testing.T) {
 		t.Fatalf("expected one session, got %d", len(env.PortForwards()))
 	}
 	session := env.PortForward(0)
-	if session == nil || session.Status() != repl.PortForwardRunning {
+	if session == nil || session.Status() != portforward.Running {
 		t.Fatalf("expected running session, got %+v", session)
 	}
 	if !strings.Contains(session.Output(), "ready output") {
@@ -159,11 +161,11 @@ func TestPortForwardsCommand_EmptyList(t *testing.T) {
 
 func TestPortForwardsCommand_ListOutputAndStatuses(t *testing.T) {
 	env := makeTestEnv()
-	running := repl.NewPortForwardSession("pod-a", "default", []string{"8080"})
+	running := portforward.NewSession("pod-a", "default", []string{"8080"})
 	running.MarkRunning()
-	stopped := repl.NewPortForwardSession("pod-b", "default", []string{"9090:80"})
+	stopped := portforward.NewSession("pod-b", "default", []string{"9090:80"})
 	stopped.Stop()
-	exited := repl.NewPortForwardSession("pod-c", "default", []string{"0:3456"})
+	exited := portforward.NewSession("pod-c", "default", []string{"0:3456"})
 	exited.MarkExited(errors.New("bind failed"))
 	env.AddPortForward(running)
 	env.AddPortForward(stopped)
@@ -184,7 +186,7 @@ func TestPortForwardsCommand_ListOutputAndStatuses(t *testing.T) {
 
 func TestPortForwardsCommand_Output(t *testing.T) {
 	env := makeTestEnv()
-	session := repl.NewPortForwardSession("pod-a", "default", []string{"8080"})
+	session := portforward.NewSession("pod-a", "default", []string{"8080"})
 	session.AppendOutput("forwarded")
 	env.AddPortForward(session)
 
@@ -212,7 +214,7 @@ func TestPortForwardsCommand_InvalidIndex(t *testing.T) {
 
 func TestPortForwardsCommand_Stop(t *testing.T) {
 	env := makeTestEnv()
-	session := repl.NewPortForwardSession("pod-a", "default", []string{"8080"})
+	session := portforward.NewSession("pod-a", "default", []string{"8080"})
 	session.MarkRunning()
 	env.AddPortForward(session)
 
@@ -229,7 +231,7 @@ func TestPortForwardsCommand_Stop(t *testing.T) {
 	if !strings.Contains(out, "Stopped") {
 		t.Fatalf("expected stop confirmation, got %q", out)
 	}
-	if session.Status() != repl.PortForwardStopped {
+	if session.Status() != portforward.Stopped {
 		t.Fatalf("expected session stopped, got %v", session.Status())
 	}
 }

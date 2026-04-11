@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"errors"
-	"github.com/heyihong/krepl/pkg/repl"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +11,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestCronJobsCommand_NoContext(t *testing.T) {

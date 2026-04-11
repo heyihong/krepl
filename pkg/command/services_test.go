@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"errors"
-	"github.com/heyihong/krepl/pkg/repl"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestServicesCommand_NoContext(t *testing.T) {

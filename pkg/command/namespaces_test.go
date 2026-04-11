@@ -1,9 +1,10 @@
 package command
 
 import (
-	"github.com/heyihong/krepl/pkg/repl"
 	"testing"
 	"time"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestFormatAge(t *testing.T) {

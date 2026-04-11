@@ -3,14 +3,15 @@ package command
 import (
 	"context"
 	"fmt"
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
 	"io"
 	"os"
 	"os/signal"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 var runLogsForObject = streamLogsForObject

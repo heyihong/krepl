@@ -4,9 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
-	"github.com/heyihong/krepl/pkg/table"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,8 +12,13 @@ import (
 	"strings"
 
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/portforward"
+	k8sportforward "k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/portforward"
+	"github.com/heyihong/krepl/pkg/repl"
+	"github.com/heyihong/krepl/pkg/table"
 )
 
 type portForwarder interface {
@@ -49,7 +51,7 @@ var newPortForwarder portForwarderFactory = func(
 
 	httpClient := &http.Client{Transport: transport}
 	dialer := spdy.NewDialer(upgrader, httpClient, http.MethodPost, requestURL)
-	return portforward.NewOnAddresses(dialer, []string{"localhost"}, ports, stopCh, readyCh, stdout, stderr)
+	return k8sportforward.NewOnAddresses(dialer, []string{"localhost"}, ports, stopCh, readyCh, stdout, stderr)
 }
 
 var readPortForwardConfirmation = func() (string, error) {
@@ -101,8 +103,8 @@ func runPortForward(env *repl.Env, args []string) error {
 		return fmt.Errorf("build port-forward request: %w", err)
 	}
 
-	session := repl.NewPortForwardSession(obj.Name, obj.Namespace, ports)
-	output := repl.NewPortForwardOutputWriter(session)
+	session := portforward.NewSession(obj.Name, obj.Namespace, ports)
+	output := portforward.NewOutputWriter(session)
 	forwarder, err := newPortForwarder(restConfig, requestURL, ports, session.StopChannel(), session.ReadyChannel(), output, output)
 	if err != nil {
 		return fmt.Errorf("create port forwarder: %w", err)
@@ -249,7 +251,7 @@ func parsePortForwardsArgs(args []string) (action string, index int, err error) 
 	}
 }
 
-func printPortForwards(sessions []*repl.PortForwardSession) {
+func printPortForwards(sessions []*portforward.Session) {
 	if len(sessions) == 0 {
 		fmt.Println("No active port forwards, see `port-forward -h` for help creating one")
 		return

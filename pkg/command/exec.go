@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
 	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 	corev1 "k8s.io/api/core/v1"
@@ -22,6 +20,9 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 type execOptions struct {

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/heyihong/krepl/pkg/portforward"
 )
 
 func TestNewEnv_SetsCurrentContext(t *testing.T) {
@@ -56,7 +58,7 @@ func TestSetContext_ClearsLastObjects(t *testing.T) {
 
 func TestPortForwardLifecycle(t *testing.T) {
 	env := makeTestEnv()
-	session := NewPortForwardSession("pod-0", "default", []string{"8080", "9090:90"})
+	session := portforward.NewSession("pod-0", "default", []string{"8080", "9090:90"})
 
 	env.AddPortForward(session)
 	if got := env.PortForward(0); got != session {
@@ -79,28 +81,28 @@ func TestPortForwardLifecycle(t *testing.T) {
 
 func TestStopAllPortForwards(t *testing.T) {
 	env := makeTestEnv()
-	a := NewPortForwardSession("pod-a", "default", []string{"8080"})
-	b := NewPortForwardSession("pod-b", "default", []string{"9090"})
+	a := portforward.NewSession("pod-a", "default", []string{"8080"})
+	b := portforward.NewSession("pod-b", "default", []string{"9090"})
 	env.AddPortForward(a)
 	env.AddPortForward(b)
 
 	env.StopAllPortForwards()
 
-	if a.Status() != PortForwardStopped || b.Status() != PortForwardStopped {
+	if a.Status() != portforward.Stopped || b.Status() != portforward.Stopped {
 		t.Fatalf("expected all sessions stopped, got %v and %v", a.Status(), b.Status())
 	}
 }
 
 func TestPortForwardOutputBounded(t *testing.T) {
-	session := NewPortForwardSession("pod-a", "default", []string{"8080"})
-	session.AppendOutput(strings.Repeat("a", maxPortForwardOutputBytes))
+	session := portforward.NewSession("pod-a", "default", []string{"8080"})
+	session.AppendOutput(strings.Repeat("a", 16*1024))
 	session.AppendOutput("tail")
 
 	if !strings.HasSuffix(session.Output(), "tail") {
 		t.Fatalf("expected retained tail output, got %q", session.Output())
 	}
-	if len(session.Output()) != maxPortForwardOutputBytes {
-		t.Fatalf("expected bounded output length %d, got %d", maxPortForwardOutputBytes, len(session.Output()))
+	if len(session.Output()) != 16*1024 {
+		t.Fatalf("expected bounded output length %d, got %d", 16*1024, len(session.Output()))
 	}
 }
 

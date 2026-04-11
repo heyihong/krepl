@@ -3,14 +3,15 @@ package command
 import (
 	"context"
 	"fmt"
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
-	"github.com/heyihong/krepl/pkg/table"
 	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
+	"github.com/heyihong/krepl/pkg/table"
 )
 
 var listJobsForContext = func(ctx context.Context, rawConfig clientcmdapi.Config, contextName, namespace string) ([]batchv1.Job, error) {

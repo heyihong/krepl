@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/heyihong/krepl/pkg/command"
 	"github.com/heyihong/krepl/pkg/config"
 	"github.com/heyihong/krepl/pkg/repl"
-	"os"
 )
 
 func main() {

@@ -6,16 +6,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heyihong/krepl/pkg/config"
-	"github.com/heyihong/krepl/pkg/repl"
-	"github.com/heyihong/krepl/pkg/table"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/config"
+	"github.com/heyihong/krepl/pkg/repl"
+	"github.com/heyihong/krepl/pkg/table"
 )
 
 var discoverDynamicResource = func(ctx context.Context, rawConfig clientcmdapi.Config, contextName, name string) (*repl.DynamicResourceDescriptor, error) {

@@ -2,8 +2,9 @@ package command
 
 import (
 	"fmt"
-	"github.com/heyihong/krepl/pkg/repl"
 	"regexp"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 var rfc1123Re = regexp.MustCompile(`^[a-z0-9]([a-z0-9\-]*[a-z0-9])?$`)

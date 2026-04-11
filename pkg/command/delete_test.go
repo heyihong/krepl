@@ -10,14 +10,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/heyihong/krepl/pkg/repl"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
 	restfake "k8s.io/client-go/rest/fake"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/heyihong/krepl/pkg/repl"
 )
 
 func TestDeleteCommand_NoActiveObject(t *testing.T) {
