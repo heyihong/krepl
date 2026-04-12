@@ -12,6 +12,7 @@ import (
 )
 
 var lookPath = exec.LookPath
+var modifyConfig = clientcmd.ModifyConfig
 
 // LoadRawConfig reads and merges all kubeconfig files according to the
 // KUBECONFIG env var, falling back to ~/.kube/config.
@@ -22,6 +23,46 @@ func LoadRawConfig() (clientcmdapi.Config, error) {
 		&clientcmd.ConfigOverrides{},
 	)
 	return clientConfig.RawConfig()
+}
+
+// SetCurrentContext updates kubeconfig's current-context on disk.
+func SetCurrentContext(name string) error {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		loadingRules,
+		&clientcmd.ConfigOverrides{},
+	)
+
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return err
+	}
+	if _, ok := rawConfig.Contexts[name]; !ok {
+		return fmt.Errorf("unknown context %q", name)
+	}
+
+	rawConfig.CurrentContext = name
+	return modifyConfig(loadingRules, rawConfig, false)
+}
+
+// DeleteContext removes a named context from the kubeconfig on disk.
+func DeleteContext(name string) error {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		loadingRules,
+		&clientcmd.ConfigOverrides{},
+	)
+
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return err
+	}
+	if _, ok := rawConfig.Contexts[name]; !ok {
+		return fmt.Errorf("unknown context %q", name)
+	}
+
+	delete(rawConfig.Contexts, name)
+	return modifyConfig(loadingRules, rawConfig, false)
 }
 
 // BuildClientForContext creates a kubernetes.Clientset for the named context.

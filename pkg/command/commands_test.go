@@ -41,6 +41,17 @@ func TestFindCommand_ContextsAlias(t *testing.T) {
 	}
 }
 
+func TestFindCommand_DeleteContextRegistered(t *testing.T) {
+	cmds := BuildCommands()
+	cmd := repl.FindCommand(cmds, "delete-context")
+	if cmd == nil {
+		t.Fatal("expected to find 'delete-context' command")
+	}
+	if cmd.Name() != "delete-context" {
+		t.Errorf("expected Name() %q, got %q", "delete-context", cmd.Name())
+	}
+}
+
 func TestFindCommand_ReplicaSetAlias(t *testing.T) {
 	cmds := BuildCommands()
 	cmd := repl.FindCommand(cmds, "rs")

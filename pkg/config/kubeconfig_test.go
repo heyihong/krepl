@@ -3,9 +3,11 @@ package config
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	clientcmdapiv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 )
@@ -134,4 +136,129 @@ func containsAll(s string, parts ...string) bool {
 		}
 	}
 	return true
+}
+
+func TestSetCurrentContext(t *testing.T) {
+	origKubeconfig := os.Getenv("KUBECONFIG")
+	t.Cleanup(func() {
+		if origKubeconfig == "" {
+			_ = os.Unsetenv("KUBECONFIG")
+			return
+		}
+		_ = os.Setenv("KUBECONFIG", origKubeconfig)
+	})
+
+	dir := t.TempDir()
+	kubeconfigPath := filepath.Join(dir, "config")
+
+	cfg := MakeFakeConfig()
+	if err := clientcmd.WriteToFile(cfg, kubeconfigPath); err != nil {
+		t.Fatalf("write kubeconfig: %v", err)
+	}
+	if err := os.Setenv("KUBECONFIG", kubeconfigPath); err != nil {
+		t.Fatalf("set KUBECONFIG: %v", err)
+	}
+
+	if err := SetCurrentContext("ctx-b"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, err := clientcmd.LoadFromFile(kubeconfigPath)
+	if err != nil {
+		t.Fatalf("reload kubeconfig: %v", err)
+	}
+	if updated.CurrentContext != "ctx-b" {
+		t.Fatalf("expected current context ctx-b, got %q", updated.CurrentContext)
+	}
+}
+
+func TestSetCurrentContext_Unknown(t *testing.T) {
+	origKubeconfig := os.Getenv("KUBECONFIG")
+	t.Cleanup(func() {
+		if origKubeconfig == "" {
+			_ = os.Unsetenv("KUBECONFIG")
+			return
+		}
+		_ = os.Setenv("KUBECONFIG", origKubeconfig)
+	})
+
+	dir := t.TempDir()
+	kubeconfigPath := filepath.Join(dir, "config")
+
+	cfg := MakeFakeConfig()
+	if err := clientcmd.WriteToFile(cfg, kubeconfigPath); err != nil {
+		t.Fatalf("write kubeconfig: %v", err)
+	}
+	if err := os.Setenv("KUBECONFIG", kubeconfigPath); err != nil {
+		t.Fatalf("set KUBECONFIG: %v", err)
+	}
+
+	err := SetCurrentContext("missing")
+	if err == nil || !strings.Contains(err.Error(), `unknown context "missing"`) {
+		t.Fatalf("expected unknown context error, got %v", err)
+	}
+}
+
+func TestDeleteContext(t *testing.T) {
+	origKubeconfig := os.Getenv("KUBECONFIG")
+	t.Cleanup(func() {
+		if origKubeconfig == "" {
+			_ = os.Unsetenv("KUBECONFIG")
+			return
+		}
+		_ = os.Setenv("KUBECONFIG", origKubeconfig)
+	})
+
+	dir := t.TempDir()
+	kubeconfigPath := filepath.Join(dir, "config")
+
+	cfg := MakeFakeConfig()
+	if err := clientcmd.WriteToFile(cfg, kubeconfigPath); err != nil {
+		t.Fatalf("write kubeconfig: %v", err)
+	}
+	if err := os.Setenv("KUBECONFIG", kubeconfigPath); err != nil {
+		t.Fatalf("set KUBECONFIG: %v", err)
+	}
+
+	if err := DeleteContext("ctx-b"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, err := clientcmd.LoadFromFile(kubeconfigPath)
+	if err != nil {
+		t.Fatalf("reload kubeconfig: %v", err)
+	}
+	if _, ok := updated.Contexts["ctx-b"]; ok {
+		t.Fatal("expected ctx-b to be deleted from kubeconfig")
+	}
+	if updated.CurrentContext != "ctx-a" {
+		t.Fatalf("expected current context to remain ctx-a, got %q", updated.CurrentContext)
+	}
+}
+
+func TestDeleteContext_Unknown(t *testing.T) {
+	origKubeconfig := os.Getenv("KUBECONFIG")
+	t.Cleanup(func() {
+		if origKubeconfig == "" {
+			_ = os.Unsetenv("KUBECONFIG")
+			return
+		}
+		_ = os.Setenv("KUBECONFIG", origKubeconfig)
+	})
+
+	dir := t.TempDir()
+	kubeconfigPath := filepath.Join(dir, "config")
+
+	cfg := MakeFakeConfig()
+	if err := clientcmd.WriteToFile(cfg, kubeconfigPath); err != nil {
+		t.Fatalf("write kubeconfig: %v", err)
+	}
+	if err := os.Setenv("KUBECONFIG", kubeconfigPath); err != nil {
+		t.Fatalf("set KUBECONFIG: %v", err)
+	}
+
+	err := DeleteContext("missing")
+	if err == nil || !strings.Contains(err.Error(), `unknown context "missing"`) {
+		t.Fatalf("expected unknown context error, got %v", err)
+	}
 }

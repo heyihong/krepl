@@ -42,6 +42,7 @@ func BuildCommands() []repl.Command {
 		func() repl.Command { return newClearCmd() },
 		func() repl.Command { return newContextCmd() },
 		func() repl.Command { return newContextsCmd() },
+		func() repl.Command { return newDeleteContextCmd() },
 		func() repl.Command { return newNamespaceCmd() },
 		func() repl.Command { return newNamespacesCmd() },
 		func() repl.Command { return newPodsCmd() },

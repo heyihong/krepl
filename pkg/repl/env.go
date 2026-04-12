@@ -235,6 +235,19 @@ func (e *Env) SetContext(name string) error {
 	return nil
 }
 
+// DeleteContext removes a named context from the in-memory kubeconfig state.
+func (e *Env) DeleteContext(name string) error {
+	if _, ok := e.rawConfig.Contexts[name]; !ok {
+		return fmt.Errorf("unknown context %q", name)
+	}
+	if name == e.currentContext {
+		return fmt.Errorf("cannot delete current context %q", name)
+	}
+	delete(e.rawConfig.Contexts, name)
+	e.rebuildPrompt()
+	return nil
+}
+
 // SetNamespace sets the working namespace. An empty string clears it.
 func (e *Env) SetNamespace(ns string) {
 	e.namespace = ns
