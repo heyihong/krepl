@@ -8,121 +8,46 @@ import (
 	"github.com/heyihong/krepl/pkg/repl"
 )
 
-func TestFindCommand_ByName(t *testing.T) {
+func TestFindCommand(t *testing.T) {
 	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "pods")
-	if cmd == nil {
-		t.Fatal("expected to find 'pods' command")
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "by name", input: "pods", expected: "pods"},
+		{name: "context alias", input: "ctx", expected: "context"},
+		{name: "contexts alias", input: "ctxs", expected: "contexts"},
+		{name: "delete-context registered", input: "delete-context", expected: "delete-context"},
+		{name: "replicasets alias", input: "rs", expected: "replicasets"},
+		{name: "deployments alias", input: "deps", expected: "deployments"},
+		{name: "statefulsets alias", input: "ss", expected: "statefulsets"},
+		{name: "crd registered", input: "crd", expected: "crd"},
+		{name: "port-forward alias", input: "pf", expected: "port-forward"},
+		{name: "port-forwards alias", input: "pfs", expected: "port-forwards"},
+		{name: "cordon registered", input: "cordon", expected: "cordon"},
+		{name: "drain registered", input: "drain", expected: "drain"},
+		{name: "uncordon registered", input: "uncordon", expected: "uncordon"},
+		{name: "unknown", input: "notacommand", expected: ""},
 	}
-	if cmd.Name() != "pods" {
-		t.Errorf("expected Name() %q, got %q", "pods", cmd.Name())
-	}
-}
 
-func TestFindCommand_ByAlias(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "ctx")
-	if cmd == nil {
-		t.Fatal("expected to find command by alias 'ctx'")
-	}
-	if cmd.Name() != "context" {
-		t.Errorf("expected Name() %q, got %q", "context", cmd.Name())
-	}
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := repl.FindCommand(cmds, tt.input)
+			if tt.expected == "" {
+				if cmd != nil {
+					t.Fatalf("expected nil for %q, got %v", tt.input, cmd)
+				}
+				return
+			}
 
-func TestFindCommand_ContextsAlias(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "ctxs")
-	if cmd == nil {
-		t.Fatal("expected to find command by alias 'ctxs'")
-	}
-	if cmd.Name() != "contexts" {
-		t.Errorf("expected Name() %q, got %q", "contexts", cmd.Name())
-	}
-}
-
-func TestFindCommand_DeleteContextRegistered(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "delete-context")
-	if cmd == nil {
-		t.Fatal("expected to find 'delete-context' command")
-	}
-	if cmd.Name() != "delete-context" {
-		t.Errorf("expected Name() %q, got %q", "delete-context", cmd.Name())
-	}
-}
-
-func TestFindCommand_ReplicaSetAlias(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "rs")
-	if cmd == nil {
-		t.Fatal("expected to find command by alias 'rs'")
-	}
-	if cmd.Name() != "replicasets" {
-		t.Errorf("expected Name() %q, got %q", "replicasets", cmd.Name())
-	}
-}
-
-func TestFindCommand_DeploymentsAlias(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "deps")
-	if cmd == nil {
-		t.Fatal("expected to find command by alias 'deps'")
-	}
-	if cmd.Name() != "deployments" {
-		t.Errorf("expected Name() %q, got %q", "deployments", cmd.Name())
-	}
-}
-
-func TestFindCommand_StatefulSetsAlias(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "ss")
-	if cmd == nil {
-		t.Fatal("expected to find command by alias 'ss'")
-	}
-	if cmd.Name() != "statefulsets" {
-		t.Errorf("expected Name() %q, got %q", "statefulsets", cmd.Name())
-	}
-}
-
-func TestFindCommand_CrdRegistered(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "crd")
-	if cmd == nil {
-		t.Fatal("expected to find 'crd' command")
-	}
-	if cmd.Name() != "crd" {
-		t.Errorf("expected Name() %q, got %q", "crd", cmd.Name())
-	}
-}
-
-func TestFindCommand_PortForwardAlias(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "pf")
-	if cmd == nil {
-		t.Fatal("expected to find command by alias 'pf'")
-	}
-	if cmd.Name() != "port-forward" {
-		t.Errorf("expected Name() %q, got %q", "port-forward", cmd.Name())
-	}
-}
-
-func TestFindCommand_PortForwardsAlias(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "pfs")
-	if cmd == nil {
-		t.Fatal("expected to find command by alias 'pfs'")
-	}
-	if cmd.Name() != "port-forwards" {
-		t.Errorf("expected Name() %q, got %q", "port-forwards", cmd.Name())
-	}
-}
-
-func TestFindCommand_Unknown(t *testing.T) {
-	cmds := BuildCommands()
-	cmd := repl.FindCommand(cmds, "notacommand")
-	if cmd != nil {
-		t.Errorf("expected nil for unknown command, got %v", cmd)
+			if cmd == nil {
+				t.Fatalf("expected to find command %q", tt.input)
+			}
+			if cmd.Name() != tt.expected {
+				t.Errorf("expected Name() %q, got %q", tt.expected, cmd.Name())
+			}
+		})
 	}
 }
 
