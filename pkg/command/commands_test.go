@@ -16,6 +16,7 @@ func TestFindCommand(t *testing.T) {
 		expected string
 	}{
 		{name: "by name", input: "pods", expected: "pods"},
+		{name: "cp registered", input: "cp", expected: "cp"},
 		{name: "context alias", input: "ctx", expected: "context"},
 		{name: "contexts alias", input: "ctxs", expected: "contexts"},
 		{name: "delete-context registered", input: "delete-context", expected: "delete-context"},

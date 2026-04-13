@@ -63,6 +63,7 @@ func BuildCommands() []repl.Command {
 		func() repl.Command { return newDescribeCmd() },
 		func() repl.Command { return newLogsCmd() },
 		func() repl.Command { return newExecCmd() },
+		func() repl.Command { return newCopyCmd() },
 		func() repl.Command { return newPortForwardCmd() },
 		func() repl.Command { return newPortForwardsCmd() },
 		func() repl.Command { return newDeleteCmd() },
