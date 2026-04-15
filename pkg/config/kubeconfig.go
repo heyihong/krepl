@@ -45,6 +45,27 @@ func SetCurrentContext(name string) error {
 	return modifyConfig(loadingRules, rawConfig, false)
 }
 
+// SetContextNamespace updates the namespace for a named kubeconfig context on disk.
+func SetContextNamespace(contextName, namespace string) error {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		loadingRules,
+		&clientcmd.ConfigOverrides{},
+	)
+
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return err
+	}
+	ctx, ok := rawConfig.Contexts[contextName]
+	if !ok {
+		return fmt.Errorf("unknown context %q", contextName)
+	}
+
+	ctx.Namespace = namespace
+	return modifyConfig(loadingRules, rawConfig, false)
+}
+
 // DeleteContext removes a named context from the kubeconfig on disk.
 func DeleteContext(name string) error {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()

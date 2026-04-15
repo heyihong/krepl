@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/heyihong/krepl/pkg/config"
 	"github.com/heyihong/krepl/pkg/repl"
 )
 
 var rfc1123Re = regexp.MustCompile(`^[a-z0-9]([a-z0-9\-]*[a-z0-9])?$`)
+var setKubeconfigContextNamespace = config.SetContextNamespace
 
 func newNamespaceCmd() *cmd {
 	return &cmd{
@@ -18,12 +20,21 @@ func newNamespaceCmd() *cmd {
 			"Run without an argument to clear the namespace filter and return to all namespaces where supported.",
 		args: maximumNArgs(1),
 		runE: func(env *repl.Env, args []string) error {
+			if env.CurrentContext() == "" {
+				return fmt.Errorf("no current context selected")
+			}
 			if len(args) == 0 {
+				if err := setKubeconfigContextNamespace(env.CurrentContext(), ""); err != nil {
+					return err
+				}
 				env.SetNamespace("")
 				fmt.Println("Namespace cleared.")
 				return nil
 			}
 			if err := validateRFC1123Label(args[0]); err != nil {
+				return err
+			}
+			if err := setKubeconfigContextNamespace(env.CurrentContext(), args[0]); err != nil {
 				return err
 			}
 			env.SetNamespace(args[0])

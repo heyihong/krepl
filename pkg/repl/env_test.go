@@ -15,6 +15,16 @@ func TestNewEnv_SetsCurrentContext(t *testing.T) {
 	}
 }
 
+func TestNewEnv_LoadsNamespaceFromCurrentContext(t *testing.T) {
+	cfg := makeTestConfig()
+	cfg.Contexts["ctx-a"].Namespace = "team-a"
+
+	env := NewEnv(cfg)
+	if env.Namespace() != "team-a" {
+		t.Errorf("expected namespace %q, got %q", "team-a", env.Namespace())
+	}
+}
+
 func TestNewEnv_PromptReflectsContext(t *testing.T) {
 	env := NewEnv(makeTestConfig())
 	expected := "[ctx-a][none][none] > "
@@ -34,6 +44,19 @@ func TestSetContext_Valid(t *testing.T) {
 	expected := "[ctx-b][none][none] > "
 	if env.Prompt() != expected {
 		t.Errorf("expected prompt %q, got %q", expected, env.Prompt())
+	}
+}
+
+func TestSetContext_LoadsNamespaceFromTargetContext(t *testing.T) {
+	cfg := makeTestConfig()
+	cfg.Contexts["ctx-b"].Namespace = "team-b"
+
+	env := NewEnv(cfg)
+	if err := env.SetContext("ctx-b"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if env.Namespace() != "team-b" {
+		t.Errorf("expected namespace %q, got %q", "team-b", env.Namespace())
 	}
 }
 
@@ -137,6 +160,16 @@ func TestSetNamespace_ClearsLastObjects(t *testing.T) {
 	env.SetNamespace("other-ns")
 	if len(env.lastObjects) != 0 {
 		t.Errorf("expected lastObjects to be cleared on namespace switch")
+	}
+}
+
+func TestSetNamespace_UpdatesRawConfigCurrentContextNamespace(t *testing.T) {
+	env := makeTestEnv()
+
+	env.SetNamespace("team-a")
+
+	if got := env.RawConfig().Contexts["ctx-a"].Namespace; got != "team-a" {
+		t.Errorf("expected rawConfig context namespace %q, got %q", "team-a", got)
 	}
 }
 

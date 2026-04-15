@@ -125,6 +125,9 @@ func NewEnv(rawConfig clientcmdapi.Config) *Env {
 	}
 	if rawConfig.CurrentContext != "" {
 		e.currentContext = rawConfig.CurrentContext
+		if ctx, ok := rawConfig.Contexts[rawConfig.CurrentContext]; ok && ctx != nil {
+			e.namespace = ctx.Namespace
+		}
 	}
 	e.rebuildPrompt()
 	return e
@@ -226,10 +229,17 @@ func (e *Env) Namespace() string { return e.namespace }
 // SetContext switches to a named context. Returns an error if the name is
 // not found in the kubeconfig.
 func (e *Env) SetContext(name string) error {
-	if _, ok := e.rawConfig.Contexts[name]; !ok {
+	ctx, ok := e.rawConfig.Contexts[name]
+	if !ok {
 		return fmt.Errorf("unknown context %q", name)
 	}
 	e.currentContext = name
+	e.rawConfig.CurrentContext = name
+	if ctx != nil {
+		e.namespace = ctx.Namespace
+	} else {
+		e.namespace = ""
+	}
 	e.lastObjects = nil
 	e.ClearSelection()
 	return nil
@@ -251,6 +261,11 @@ func (e *Env) DeleteContext(name string) error {
 // SetNamespace sets the working namespace. An empty string clears it.
 func (e *Env) SetNamespace(ns string) {
 	e.namespace = ns
+	if e.currentContext != "" {
+		if ctx, ok := e.rawConfig.Contexts[e.currentContext]; ok && ctx != nil {
+			ctx.Namespace = ns
+		}
+	}
 	e.lastObjects = nil
 	e.ClearSelection()
 }

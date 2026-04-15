@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -9,12 +10,31 @@ func TestNamespaceCommand_Set(t *testing.T) {
 	env := makeTestEnv()
 	cmd := newNamespaceCmd()
 
+	origSet := setKubeconfigContextNamespace
+	t.Cleanup(func() {
+		setKubeconfigContextNamespace = origSet
+	})
+
+	var persistedContext string
+	var persistedNamespace string
+	setKubeconfigContextNamespace = func(contextName, namespace string) error {
+		persistedContext = contextName
+		persistedNamespace = namespace
+		return nil
+	}
+
 	out := captureStdout(t, func() {
 		if err := cmd.Execute(env, []string{"my-ns"}); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
+	if persistedContext != "ctx-a" {
+		t.Fatalf("expected persisted context ctx-a, got %q", persistedContext)
+	}
+	if persistedNamespace != "my-ns" {
+		t.Fatalf("expected persisted namespace my-ns, got %q", persistedNamespace)
+	}
 	if env.Namespace() != "my-ns" {
 		t.Errorf("expected namespace %q, got %q", "my-ns", env.Namespace())
 	}
@@ -27,8 +47,20 @@ func TestNamespaceCommand_Clear(t *testing.T) {
 	env := makeTestEnv()
 	cmd := newNamespaceCmd()
 
+	origSet := setKubeconfigContextNamespace
+	t.Cleanup(func() {
+		setKubeconfigContextNamespace = origSet
+	})
+	setKubeconfigContextNamespace = func(string, string) error { return nil }
+
 	// Set first, then clear.
 	_ = cmd.Execute(env, []string{"my-ns"})
+
+	var persistedNamespace string
+	setKubeconfigContextNamespace = func(_ string, namespace string) error {
+		persistedNamespace = namespace
+		return nil
+	}
 
 	out := captureStdout(t, func() {
 		if err := cmd.Execute(env, nil); err != nil {
@@ -36,11 +68,57 @@ func TestNamespaceCommand_Clear(t *testing.T) {
 		}
 	})
 
+	if persistedNamespace != "" {
+		t.Fatalf("expected cleared namespace to be persisted as empty, got %q", persistedNamespace)
+	}
 	if env.Namespace() != "" {
 		t.Errorf("expected namespace to be cleared, got %q", env.Namespace())
 	}
 	if !strings.Contains(out, "cleared") {
 		t.Errorf("expected 'cleared' in output, got: %q", out)
+	}
+}
+
+func TestNamespaceCommand_SetPropagatesPersistError(t *testing.T) {
+	env := makeTestEnv()
+	cmd := newNamespaceCmd()
+
+	origSet := setKubeconfigContextNamespace
+	t.Cleanup(func() {
+		setKubeconfigContextNamespace = origSet
+	})
+	setKubeconfigContextNamespace = func(string, string) error {
+		return fmt.Errorf("persist failed")
+	}
+
+	err := cmd.Execute(env, []string{"my-ns"})
+	if err == nil || !strings.Contains(err.Error(), "persist failed") {
+		t.Fatalf("expected persist error, got %v", err)
+	}
+	if env.Namespace() != "" {
+		t.Fatalf("expected namespace to remain unset, got %q", env.Namespace())
+	}
+}
+
+func TestNamespaceCommand_ClearPropagatesPersistError(t *testing.T) {
+	env := makeTestEnv()
+	env.SetNamespace("my-ns")
+	cmd := newNamespaceCmd()
+
+	origSet := setKubeconfigContextNamespace
+	t.Cleanup(func() {
+		setKubeconfigContextNamespace = origSet
+	})
+	setKubeconfigContextNamespace = func(string, string) error {
+		return fmt.Errorf("persist failed")
+	}
+
+	err := cmd.Execute(env, nil)
+	if err == nil || !strings.Contains(err.Error(), "persist failed") {
+		t.Fatalf("expected persist error, got %v", err)
+	}
+	if env.Namespace() != "my-ns" {
+		t.Fatalf("expected namespace to remain my-ns, got %q", env.Namespace())
 	}
 }
 
@@ -78,6 +156,13 @@ func TestNamespaceCommand_Invalid_LeadingHyphen(t *testing.T) {
 func TestNamespaceCommand_PromptUpdated(t *testing.T) {
 	env := makeTestEnv()
 	cmd := newNamespaceCmd()
+
+	origSet := setKubeconfigContextNamespace
+	t.Cleanup(func() {
+		setKubeconfigContextNamespace = origSet
+	})
+	setKubeconfigContextNamespace = func(string, string) error { return nil }
+
 	_ = captureStdout(t, func() {
 		_ = cmd.Execute(env, []string{"kube-system"})
 	})

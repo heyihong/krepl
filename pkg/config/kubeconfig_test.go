@@ -199,6 +199,102 @@ func TestSetCurrentContext_Unknown(t *testing.T) {
 	}
 }
 
+func TestSetContextNamespace(t *testing.T) {
+	origKubeconfig := os.Getenv("KUBECONFIG")
+	t.Cleanup(func() {
+		if origKubeconfig == "" {
+			_ = os.Unsetenv("KUBECONFIG")
+			return
+		}
+		_ = os.Setenv("KUBECONFIG", origKubeconfig)
+	})
+
+	dir := t.TempDir()
+	kubeconfigPath := filepath.Join(dir, "config")
+
+	cfg := MakeFakeConfig()
+	if err := clientcmd.WriteToFile(cfg, kubeconfigPath); err != nil {
+		t.Fatalf("write kubeconfig: %v", err)
+	}
+	if err := os.Setenv("KUBECONFIG", kubeconfigPath); err != nil {
+		t.Fatalf("set KUBECONFIG: %v", err)
+	}
+
+	if err := SetContextNamespace("ctx-a", "team-a"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, err := clientcmd.LoadFromFile(kubeconfigPath)
+	if err != nil {
+		t.Fatalf("reload kubeconfig: %v", err)
+	}
+	if got := updated.Contexts["ctx-a"].Namespace; got != "team-a" {
+		t.Fatalf("expected ctx-a namespace team-a, got %q", got)
+	}
+}
+
+func TestSetContextNamespace_Clear(t *testing.T) {
+	origKubeconfig := os.Getenv("KUBECONFIG")
+	t.Cleanup(func() {
+		if origKubeconfig == "" {
+			_ = os.Unsetenv("KUBECONFIG")
+			return
+		}
+		_ = os.Setenv("KUBECONFIG", origKubeconfig)
+	})
+
+	dir := t.TempDir()
+	kubeconfigPath := filepath.Join(dir, "config")
+
+	cfg := MakeFakeConfig()
+	cfg.Contexts["ctx-a"].Namespace = "team-a"
+	if err := clientcmd.WriteToFile(cfg, kubeconfigPath); err != nil {
+		t.Fatalf("write kubeconfig: %v", err)
+	}
+	if err := os.Setenv("KUBECONFIG", kubeconfigPath); err != nil {
+		t.Fatalf("set KUBECONFIG: %v", err)
+	}
+
+	if err := SetContextNamespace("ctx-a", ""); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, err := clientcmd.LoadFromFile(kubeconfigPath)
+	if err != nil {
+		t.Fatalf("reload kubeconfig: %v", err)
+	}
+	if got := updated.Contexts["ctx-a"].Namespace; got != "" {
+		t.Fatalf("expected ctx-a namespace cleared, got %q", got)
+	}
+}
+
+func TestSetContextNamespace_Unknown(t *testing.T) {
+	origKubeconfig := os.Getenv("KUBECONFIG")
+	t.Cleanup(func() {
+		if origKubeconfig == "" {
+			_ = os.Unsetenv("KUBECONFIG")
+			return
+		}
+		_ = os.Setenv("KUBECONFIG", origKubeconfig)
+	})
+
+	dir := t.TempDir()
+	kubeconfigPath := filepath.Join(dir, "config")
+
+	cfg := MakeFakeConfig()
+	if err := clientcmd.WriteToFile(cfg, kubeconfigPath); err != nil {
+		t.Fatalf("write kubeconfig: %v", err)
+	}
+	if err := os.Setenv("KUBECONFIG", kubeconfigPath); err != nil {
+		t.Fatalf("set KUBECONFIG: %v", err)
+	}
+
+	err := SetContextNamespace("missing", "team-a")
+	if err == nil || !strings.Contains(err.Error(), `unknown context "missing"`) {
+		t.Fatalf("expected unknown context error, got %v", err)
+	}
+}
+
 func TestDeleteContext(t *testing.T) {
 	origKubeconfig := os.Getenv("KUBECONFIG")
 	t.Cleanup(func() {
